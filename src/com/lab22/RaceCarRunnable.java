@@ -1,5 +1,7 @@
 package com.lab22;
 
+import java.util.Random;
+
 import static java.lang.Thread.sleep;
 
 public class RaceCarRunnable extends Car {
@@ -17,10 +19,13 @@ public class RaceCarRunnable extends Car {
         super();
     }
 
-    public Integer getRandomSpeed() {
+    public int getRandomSpeed() {
         int min = getMaxSpeed() / 2;
         int max = getMaxSpeed();
-        return min & max;
+        Random random = new Random();
+        int speed = max - min;
+        int i = random.nextInt(speed + 1);
+        return i += min;
     }
 
     public Integer getPassed() {
