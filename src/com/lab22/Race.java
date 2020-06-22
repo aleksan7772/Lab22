@@ -6,6 +6,7 @@ import java.util.List;
 
 import static java.lang.Thread.currentThread;
 import static java.lang.Thread.sleep;
+import static sun.jvm.hotspot.runtime.PerfMemory.start;
 
 public class Race {
     public static void main(String[] args) {
@@ -15,22 +16,28 @@ public class Race {
         cars.add((new RaceCarRunnable("BMW", 300, 402)));
         cars.add((new RaceCarRunnable("AstonMartin", 280, 402)));
         List<Thread> threads = List.of(new Thread(String.valueOf(cars)));
-        Race.startRace();
+
     }
 
     static void startRace(List<Thread> cars) {
         cars.add(new Thread(new Runnable() {
             @Override
             public void run() {
-                for (int i = 3; i >= 1; i++) {
-                    System.out.println(i);
-                    try {
-                        sleep(500);
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                    }
+                try {
+                    System.out.println("3...");
+                    sleep(500);
+                    System.out.println("2...");
+                    sleep(500);
+                    System.out.println("1...");
+                    sleep(500);
                     System.out.println("GO!!!");
+                    for (Thread r : cars) {
+                        start();
+                    }
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
                 }
+
             }
         }));
     }
