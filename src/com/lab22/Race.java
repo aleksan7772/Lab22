@@ -3,24 +3,31 @@ package com.lab22;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.CountDownLatch;
+import java.util.stream.Collectors;
 
-import static java.lang.Thread.currentThread;
 import static java.lang.Thread.sleep;
-import static sun.jvm.hotspot.runtime.PerfMemory.start;
 
 public class Race {
     public static void main(String[] args) {
-        //        cars.add(new RaceCarRunnable ("BMW",250,402));
-//        cars.add((RaceCarRunnable) new Car("mercedes",255));
+        int count = 2;
         List<RaceCarRunnable> cars = new ArrayList<>();
-        cars.add((new RaceCarRunnable("BMW", 300, 402)));
-        cars.add((new RaceCarRunnable("AstonMartin", 280, 402)));
-        List<Thread> threads = List.of(new Thread(String.valueOf(cars)));
+        CountDownLatch countDownLatch = new CountDownLatch(count);
+        cars.add((new RaceCarRunnable("BMW", 300, 1000, countDownLatch)));
+        cars.add((new RaceCarRunnable("AstonMartin", 300, 1000, countDownLatch)));
+        List<Thread> threads1 = cars.stream().map(Thread::new).collect(Collectors.toList());
+        startRace(threads1);
+        try {
+            countDownLatch.await();
 
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        System.out.println("Finish");
     }
 
     static void startRace(List<Thread> cars) {
-        cars.add(new Thread(new Runnable() {
+        new Thread(new Runnable() {
             @Override
             public void run() {
                 try {
@@ -32,13 +39,13 @@ public class Race {
                     sleep(500);
                     System.out.println("GO!!!");
                     for (Thread r : cars) {
-                        start();
+                        r.start();
                     }
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
 
             }
-        }));
+        }).start();
     }
 }

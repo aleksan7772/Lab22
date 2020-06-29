@@ -1,23 +1,29 @@
 package com.lab22;
 
 import java.util.Random;
+import java.util.concurrent.CountDownLatch;
 
 import static java.lang.Thread.sleep;
 
 public class RaceCarRunnable extends Car {
-    private Integer passed; // пройденная дистанция
-    private Integer distance; // длина трассы
-    private volatile boolean isFinish; // флаг завершения гонки
+    private int passed; // пройденная дистанция
+    private int distance; // длина трассы
+    private boolean isFinish; // флаг завершения гонки
+    private CountDownLatch countDownLatch;
 
 
-    public RaceCarRunnable(String name, Integer maxSpeed, Integer distance) {
+    public RaceCarRunnable(String name, Integer maxSpeed, Integer distance, CountDownLatch countDownLatch) {
         super(name, maxSpeed);
         this.distance = distance;
+        this.countDownLatch = countDownLatch;
+
     }
 
     public RaceCarRunnable() {
         super();
     }
+
+    static int count = 1;
 
     public int getRandomSpeed() {
         int min = getMaxSpeed() / 2;
@@ -52,8 +58,9 @@ public class RaceCarRunnable extends Car {
         isFinish = finish;
     }
 
-    void print() {
-        System.out.println(getName() + " => " + " speed: " + getRandomSpeed() + " progress: " + getPassed() + '/' + getDistance());
+    void print(int speed) {
+
+        System.out.println(getName() + " => " + " speed: " + speed + " progress: " + getPassed() + '/' + getDistance());
     }
 
     @Override
@@ -63,16 +70,18 @@ public class RaceCarRunnable extends Car {
 
         RaceCarRunnable that = (RaceCarRunnable) o;
 
+        if (passed != that.passed) return false;
+        if (distance != that.distance) return false;
         if (isFinish != that.isFinish) return false;
-        if (passed != null ? !passed.equals(that.passed) : that.passed != null) return false;
-        return distance != null ? distance.equals(that.distance) : that.distance == null;
+        return countDownLatch != null ? countDownLatch.equals(that.countDownLatch) : that.countDownLatch == null;
     }
 
     @Override
     public int hashCode() {
-        int result = passed != null ? passed.hashCode() : 0;
-        result = 31 * result + (distance != null ? distance.hashCode() : 0);
+        int result = passed;
+        result = 31 * result + distance;
         result = 31 * result + (isFinish ? 1 : 0);
+        result = 31 * result + (countDownLatch != null ? countDownLatch.hashCode() : 0);
         return result;
     }
 
@@ -90,12 +99,23 @@ public class RaceCarRunnable extends Car {
         super.run();
         while (!isFinish) {
             try {
+                int speed = getRandomSpeed();
+                passed += speed;
+                print(speed);
                 sleep(1000);
-                if (passed >= distance)
+                if (passed >= distance) {
                     isFinish = true;
+                }
+
             } catch (InterruptedException e) {
+                isFinish = true;
                 e.printStackTrace();
             }
+
+        }
+        countDownLatch.countDown();
+        if (passed >= distance) {
+            System.out.println("Place " + count++ + " -> " + getName());
 
         }
     }
